@@ -1,20 +1,10 @@
 import { useState, useEffect } from 'react'
+import Persons from './components/Persons'
+import Filter from './components/Filter'
 import Contacts from './services/Contacts'
+import Notification from './components/Notification'
 
-const Filter = ({ filter, setFilter }) => {
-  return (
-    <div>filter shown with <input value={filter} onChange={(event) => setFilter(event.target.value)}/></div>
-  )
-}
-
-const Persons = ({ person, removePerson }) => {
-  return (
-    <li>{person.name} {person.number}
-    <button onClick={() => removePerson(person.id)}>delete</button></li>
-  )
-}
-
-const addPerson = (event, persons, setPersons, newName, setNewName, newNumber, setNewNumber) => {
+const addPerson = (event, persons, setPersons, newName, setNewName, newNumber, setNewNumber, setNotification) => {
   event.preventDefault()
   const newPerson = { name: newName, number: newNumber }
   if (newPerson.name === '') {
@@ -34,32 +24,49 @@ const addPerson = (event, persons, setPersons, newName, setNewName, newNumber, s
     const person = persons.find(person => person.name === newPerson.name)
     const updatedPerson = { ...person, number: newPerson.number }
     Contacts
-      .update
-      (person.id, updatedPerson)
+      .update(person.id, updatedPerson)
       .then(returnedPerson => {
         setPersons(persons.map(person => person.id !== returnedPerson.id ? person : returnedPerson))
+      })
+      .catch(() => {
+        setNotification({ message: `Information of ${newPerson.name} has already been removed from the database`, type: 'error'})
+        setTimeout(() => {
+          setNotification({message: null, type: ''})
+        }, 5000)
       })
     setNewName('')
     setNewNumber('')
     return
   }
-  if (newPerson.number)
-  Contacts
-    .create(newPerson)
-    .then(returnedPerson => {
-      setPersons(persons.concat(returnedPerson))
-    })
-  setNewName('')
-  setNewNumber('')
+  if (newPerson.number) {
+    Contacts
+      .create(newPerson)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
+      })
+    setNotification({ message: `Added ${newPerson.name}`, type: 'success'})
+    setTimeout(() => {
+      setNotification({message: null, type: ''})
+    }, 5000)
+    setNewName('')
+    setNewNumber('')
+  }
 }
 
-const removePerson = (id, persons, setPersons) => {
+const removePerson = (id, persons, setPersons, setNotification) => {
   const person = persons.find(person => person.id === id)
   if (window.confirm(`Delete ${person.name}?`)) {
     Contacts
       .remove(id)
       .then(() => {
         setPersons(persons.filter(person => person.id !== id))
+      })
+      .catch (() => {
+        setNotification({ message: `Information of ${person.name} has already been removed from the database`, type: 'error'})
+        setTimeout(() => {
+          setNotification({message: null, type: ''})
+          setPersons(persons.filter(person => person.id !== id))
+        }, 5000)
       })
   }
 }
@@ -69,6 +76,7 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
+  const [notification, setNotification] = useState({ message: null, type: 'success' })
 
   useEffect(() => {
     Contacts
@@ -93,9 +101,10 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification.message} type={notification.type}/>
       <Filter filter={filter} setFilter={setFilter} />
       <h2>add a new</h2>
-      <form onSubmit={(event) => addPerson(event, persons, setPersons, newName, setNewName, newNumber, setNewNumber)}>
+      <form onSubmit={(event) => addPerson(event, persons, setPersons, newName, setNewName, newNumber, setNewNumber, setNotification)}>
         <div>
           name: <input value={newName} onChange={(event) => handleNewName(event, setNewName)} />
         </div>
@@ -108,7 +117,7 @@ const App = () => {
       </form>
       <h2>Numbers</h2>
       <ul>
-        {personsToShow.map(person => <Persons key={person.name} person={person} removePerson={(id) => removePerson(id, persons, setPersons)} />)}
+        {personsToShow.map(person => <Persons key={person.name} person={person} removePerson={(id) => removePerson(id, persons, setPersons, setNotification)} />)}
       </ul>
     </div>
   )
