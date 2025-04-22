@@ -6,7 +6,6 @@ const Notification = ({ message, type }) => {
   }
 
   const className = type === 'error' ? 'notification error' : 'notification success'
-  console.log(`type is ${type}`)
   return (
 	<div className={className}>
 	  {message}
