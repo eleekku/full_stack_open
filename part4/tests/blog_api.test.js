@@ -111,6 +111,33 @@ test('new blog is added', async () => {
 }
 );
 
+test('deletion of a blog succeeds with status 204 if id is valid', async () => {
+	const blogsAtStart = await api.get('/api/blogs')
+	const blogToDelete = blogsAtStart.body[0]
+
+	await api
+		.delete(`/api/blogs/${blogToDelete.id}`)
+		.expect(204)
+
+	const blogsAtEnd = await api.get('/api/blogs')
+	assert.strictEqual(blogsAtEnd.body.length, tableOfBlogs.length - 1)
+})
+
+test('updating likes of a blog succeeds and returns updated blog', async () => {
+	const blogsAtStart = await api.get('/api/blogs')
+	const blogToUpdate = blogsAtStart.body[0]
+
+	const updatedData = { likes: blogToUpdate.likes + 1 }
+
+	const result = await api
+		.put(`/api/blogs/${blogToUpdate.id}`)
+		.send(updatedData)
+		.expect(200)
+		.expect('Content-Type', /application\/json/)
+
+	assert.strictEqual(result.body.likes, blogToUpdate.likes + 1)
+})
+
 after(async () => {
 	await mongoose.connection.close();
 }
