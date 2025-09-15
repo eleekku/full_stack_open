@@ -3,10 +3,13 @@ const mongoose = require('mongoose');
 const supertest = require('supertest');
 const assert = require('node:assert');
 const Blog = require('../models/blog');
+const User = require('../models/user');
+const bcrypt = require('bcrypt');
 const { MONGODB_URI } = require('../utils/config');
 const app = require('../app');
 
 const api = supertest(app);
+let token = null
 
 const tableOfBlogs = [
 	{
@@ -64,6 +67,14 @@ beforeEach(async () => {
 	const blogObjects = tableOfBlogs.map(blog => new Blog(blog));
 	const promiseArray = blogObjects.map(blog => blog.save());
 	await Promise.all(promiseArray);
+
+	// create a user and login to get token for protected operations
+	await User.deleteMany({})
+	const passwordHash = await bcrypt.hash('sekret', 10)
+	const user = new User({ username: 'tester', passwordHash })
+	await user.save()
+	const res = await api.post('/api/login').send({ username: 'tester', password: 'sekret' })
+	token = res.body.token
 }
 );
 test('blogs are returned as json', async () => {
@@ -97,7 +108,8 @@ test('new blog is added', async () => {
 	};
 	const response = await api
 		.post('/api/blogs')
-		.send(newBlog)
+	 	.set('Authorization', `Bearer ${token}`)
+	 	.send(newBlog)
 		.expect(201)
 		.expect('Content-Type', /application\/json/);
 	const blogsAtEnd = await api.get('/api/blogs');
@@ -116,7 +128,8 @@ test('deletion of a blog succeeds with status 204 if id is valid', async () => {
 	const blogToDelete = blogsAtStart.body[0]
 
 	await api
-		.delete(`/api/blogs/${blogToDelete.id}`)
+			.delete(`/api/blogs/${blogToDelete.id}`)
+			.set('Authorization', `Bearer ${token}`)
 		.expect(204)
 
 	const blogsAtEnd = await api.get('/api/blogs')
