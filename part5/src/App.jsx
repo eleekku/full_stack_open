@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
+import Notification from './components/Notification'
 import blogService from './services/blogs'
 import loginService from './services/login'
+import './index.css'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
@@ -11,6 +13,12 @@ const App = () => {
   const [newTitle, setNewTitle] = useState('')
   const [newAuthor, setNewAuthor] = useState('')
   const [newUrl, setNewUrl] = useState('')
+  const [notification, setNotification] = useState({ message: null, type: null })
+
+  const notify = (message, type = 'success') => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification({ message: null, type: null }), 5000)
+  }
 
   useEffect(() => {
     blogService.getAll().then(blogs =>
@@ -37,7 +45,7 @@ const App = () => {
       setUsername('')
       setPassword('')
     } catch {
-      console.error('Wrong credentials')
+      notify('wrong username or password', 'error')
     }
   }
 
@@ -51,6 +59,7 @@ const App = () => {
     event.preventDefault()
     const createdBlog = await blogService.create({ title: newTitle, author: newAuthor, url: newUrl })
     setBlogs(blogs.concat(createdBlog))
+    notify(`a new blog ${createdBlog.title} by ${createdBlog.author} added`)
     setNewTitle('')
     setNewAuthor('')
     setNewUrl('')
@@ -100,6 +109,8 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
+
+      <Notification message={notification.message} type={notification.type} />
 
       {!user && loginForm()}
 
