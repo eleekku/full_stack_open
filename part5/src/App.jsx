@@ -68,8 +68,7 @@ const App = () => {
       title: blog.title,
       author: blog.author,
       url: blog.url,
-      likes: blog.likes + 1,
-      user: blog.user?._id || blog.user
+      likes: blog.likes + 1
     })
     setBlogs(blogs.map(b => b.id === updated.id ? updated : b))
   }
