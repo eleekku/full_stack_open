@@ -1,5 +1,14 @@
 const { test, expect, beforeEach, describe } = require('@playwright/test')
 
+const createBlog = async (page, title, author, url) => {
+  await page.getByRole('button', { name: 'create new blog' }).click()
+  await page.getByPlaceholder('title').fill(title)
+  await page.getByPlaceholder('author').fill(author)
+  await page.getByPlaceholder('url').fill(url)
+  await page.getByRole('button', { name: 'create' }).click()
+  await expect(page.getByText(`${title} ${author}`)).toBeVisible()
+}
+
 describe('Blog app', () => {
   beforeEach(async ({ page, request }) => {
     await request.post('http://localhost:5173/api/testing/reset')
@@ -61,22 +70,22 @@ describe('Blog app', () => {
 
     test('a new blog can be created', async ({ page }) => {
       await page.getByRole('button', { name: 'create new blog' }).click()
-      await page.getByPlaceholder('title').fill('Test Blog Title')
-      await page.getByPlaceholder('author').fill('Test Author')
+      await page.getByPlaceholder('title').fill('Testi blogi')
+      await page.getByPlaceholder('author').fill('Testaaja')
       await page.getByPlaceholder('url').fill('http://testblog.com')
       await page.getByRole('button', { name: 'create' }).click()
 
-      await expect(page.getByText('Test Blog Title Test Author')).toBeVisible()
+      await expect(page.getByText('Testi blogi Testaaja')).toBeVisible()
     })
 
     describe('and a blog exists', () => {
       beforeEach(async ({ page }) => {
         await page.getByRole('button', { name: 'create new blog' }).click()
-        await page.getByPlaceholder('title').fill('Test Blog Title')
-        await page.getByPlaceholder('author').fill('Test Author')
+        await page.getByPlaceholder('title').fill('Testi blogi')
+        await page.getByPlaceholder('author').fill('Testaaja')
         await page.getByPlaceholder('url').fill('http://testblog.com')
         await page.getByRole('button', { name: 'create' }).click()
-        await expect(page.getByText('Test Blog Title Test Author')).toBeVisible()
+        await expect(page.getByText('Testi blogi Testaaja')).toBeVisible()
       })
 
       test('a blog can be liked', async ({ page }) => {
@@ -93,7 +102,29 @@ describe('Blog app', () => {
         page.on('dialog', dialog => dialog.accept())
         await page.getByRole('button', { name: 'remove' }).click()
 
-        await expect(page.getByText('Test Blog Title Test Author')).not.toBeVisible()
+        await expect(page.getByText('Testi blogi Testaaja')).not.toBeVisible()
+      })
+
+      test('blogs are ordered by likes, most likes first', async ({ page }) => {
+        await createBlog(page, 'Blogi A', 'Testaaja A', 'http://google.com')
+        await createBlog(page, 'Blogi B', 'Testaaja B', 'http://example.com')
+
+        const blogA = page.locator('.blog', { hasText: 'Blogi A Testaaja A' })
+        await blogA.getByRole('button', { name: 'view' }).click()
+        await blogA.getByRole('button', { name: 'like' }).click()
+        await expect(blogA.getByText('likes 1')).toBeVisible()
+
+        const blogB = page.locator('.blog', { hasText: 'Blogi B Testaaja B' })
+        await blogB.getByRole('button', { name: 'view' }).click()
+        await blogB.getByRole('button', { name: 'like' }).click()
+        await expect(blogB.getByText('likes 1')).toBeVisible()
+        await blogB.getByRole('button', { name: 'like' }).click()
+        await expect(blogB.getByText('likes 2')).toBeVisible()
+
+        const blogs = page.locator('.blog')
+        await expect(blogs.nth(0)).toContainText('Blogi B')
+        await expect(blogs.nth(1)).toContainText('Blogi A')
+        await expect(blogs.nth(2)).toContainText('Testi blogi')
       })
 
       test('only the user who added the blog sees the delete button', async ({ page, request }) => {
