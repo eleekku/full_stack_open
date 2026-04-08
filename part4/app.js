@@ -24,6 +24,11 @@ app.use('/api/blogs', blogRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/login', loginRouter)
 
+if (process.env.NODE_ENV === 'test') {
+  const testingRouter = require('./controllers/testing')
+  app.use('/api/testing', testingRouter)
+}
+
 // basic error handler to return error messages during tests
 const errorHandler = (error, request, response, next) => {
   console.error(error.message)
