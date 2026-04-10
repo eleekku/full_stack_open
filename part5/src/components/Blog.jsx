@@ -1,27 +1,29 @@
-import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-const Blog = ({ blog, onLike, onDelete, user }) => {
-  const [visible, setVisible] = useState(false)
+const Blog = ({ blog, user, onLike, onDelete }) => {
+  const navigate = useNavigate()
 
-  const blogStyle = {
-    paddingTop: 10, paddingLeft: 2,
-    border: 'solid', borderWidth: 1, marginBottom: 5
+  if (!blog) {
+    return null
+  }
+
+  const isOwner = user && blog.user?.username === user.username
+
+  const handleDelete = async () => {
+    await onDelete(blog)
+    navigate('/')
   }
 
   return (
-    <div style={blogStyle} className="blog">
-      {blog.title} {blog.author}
-      <button onClick={() => setVisible(!visible)}>{visible ? 'hide' : 'view'}</button>
-      {visible && (
-        <div>
-          <div>{blog.url}</div>
-          <div>likes {blog.likes} <button onClick={() => onLike(blog)}>like</button></div>
-          <div>{blog.user?.name}</div>
-          {blog.user?.username === user?.username && (
-            <button onClick={() => onDelete(blog)}>remove</button>
-          )}
-        </div>
-      )}
+    <div className="blog">
+      <h2>{blog.title} {blog.author}</h2>
+      <div><a href={blog.url}>{blog.url}</a></div>
+      <div>
+        likes {blog.likes}
+        {user && <button onClick={() => onLike(blog)}>like</button>}
+      </div>
+      <div>added by {blog.user?.name}</div>
+      {isOwner && <button onClick={handleDelete}>remove</button>}
     </div>
   )
 }

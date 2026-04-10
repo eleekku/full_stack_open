@@ -1,12 +1,17 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import BlogForm from './BlogForm'
 
 // 5.16: form calls createBlog with correct data on submit
 test('calls createBlog with correct data on submit', async () => {
   const user = userEvent.setup()
   const createBlog = vi.fn()
-  render(<BlogForm createBlog={createBlog} />)
+  render(
+    <MemoryRouter>
+      <BlogForm createBlog={createBlog} />
+    </MemoryRouter>
+  )
 
   await user.type(screen.getByPlaceholderText('title'), 'New Blog')
   await user.type(screen.getByPlaceholderText('author'), 'New Author')
