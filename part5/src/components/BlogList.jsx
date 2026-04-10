@@ -1,27 +1,36 @@
-import { Link } from 'react-router-dom'
-
-const blogStyle = {
-  paddingTop: 10,
-  paddingLeft: 2,
-  border: 'solid',
-  borderWidth: 1,
-  marginBottom: 5
-}
+import { Link as RouterLink } from 'react-router-dom'
+import {
+  Container, Typography, List, ListItem, ListItemButton, ListItemText, Paper
+} from '@mui/material'
 
 const BlogList = ({ blogs }) => {
   const sorted = [...blogs].sort((a, b) => b.likes - a.likes)
 
   return (
-    <div>
-      <h2>blogs</h2>
-      {sorted.map(blog => (
-        <div key={blog.id} style={blogStyle} className="blog">
-          <Link to={`/blogs/${blog.id}`}>
-            {blog.title} {blog.author}
-          </Link>
-        </div>
-      ))}
-    </div>
+    <Container maxWidth="md" sx={{ mt: 3 }}>
+      <Typography variant="h4" component="h2" gutterBottom>
+        blogs
+      </Typography>
+      <Paper variant="outlined">
+        <List disablePadding>
+          {sorted.map((blog, index) => (
+            <ListItem
+              key={blog.id}
+              divider={index < sorted.length - 1}
+              disablePadding
+              className="blog"
+            >
+              <ListItemButton component={RouterLink} to={`/blogs/${blog.id}`}>
+                <ListItemText
+                  primary={`${blog.title} ${blog.author}`}
+                  secondary={`${blog.likes} likes`}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    </Container>
   )
 }
 

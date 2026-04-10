@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
-  Routes, Route, Link, Navigate, useMatch, useNavigate
+  Routes, Route, Link as RouterLink, Navigate, useMatch, useNavigate
 } from 'react-router-dom'
+import {
+  AppBar, Toolbar, Typography, Button, Box
+} from '@mui/material'
 import Blog from './components/Blog'
 import Notification from './components/Notification'
 import BlogForm from './components/BlogForm'
@@ -85,18 +88,40 @@ const App = () => {
     ? blogs.find(b => b.id === match.params.id)
     : null
 
-  const padding = { padding: 5 }
-
   return (
-    <div>
-      <div>
-        <Link style={padding} to="/">blogs</Link>
-        {user && <Link style={padding} to="/create">create new</Link>}
-        {user
-          ? <span>{user.name} logged in <button onClick={handleLogout}>logout</button></span>
-          : <Link style={padding} to="/login">login</Link>
-        }
-      </div>
+    <Box>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Blog App
+          </Typography>
+          <Button color="inherit" component={RouterLink} to="/">
+            blogs
+          </Button>
+          {user && (
+            <Button color="inherit" component={RouterLink} to="/create">
+              create new
+            </Button>
+          )}
+          {user
+            ? (
+              <>
+                <Typography variant="body1" sx={{ mx: 2 }}>
+                  {user.name} logged in
+                </Typography>
+                <Button color="inherit" onClick={handleLogout}>
+                  logout
+                </Button>
+              </>
+            )
+            : (
+              <Button color="inherit" component={RouterLink} to="/login">
+                login
+              </Button>
+            )
+          }
+        </Toolbar>
+      </AppBar>
 
       <Notification message={notification.message} type={notification.type} />
 
@@ -122,7 +147,7 @@ const App = () => {
           }
         />
       </Routes>
-    </div>
+    </Box>
   )
 }
 
